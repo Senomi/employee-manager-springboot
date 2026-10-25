@@ -1,37 +1,55 @@
+
 package com.example.employee_manager.service;
 
 import com.example.employee_manager.model.Employee;
 import com.example.employee_manager.repository.EmployeeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class EmployeeService {
 
-    @Autowired
-    private EmployeeRepository employeeRepository;
+    private final EmployeeRepository employeeRepository;
 
+    public EmployeeService(EmployeeRepository employeeRepository) {
+        this.employeeRepository = employeeRepository;
+    }
+
+    // Get all employees or search by name
     public List<Employee> getAllEmployees(String keyword) {
-        String trimmedKeyword = keyword == null ? "" : keyword.trim();
-        if (!trimmedKeyword.isEmpty()) {
-            return employeeRepository.findByFullNameContainingIgnoreCase(trimmedKeyword);
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return employeeRepository.findAll();
         }
-        return employeeRepository.findAll();
+
+        return employeeRepository
+                .findByFullNameContainingIgnoreCase(keyword.trim());
     }
 
-    public void saveEmployee(Employee employee) {
-        employeeRepository.save(employee);
+    // Save employee
+    public Employee saveEmployee(Employee employee) {
+        return employeeRepository.save(employee);
     }
 
+    // Get employee by ID
     public Employee getEmployeeById(Long id) {
-        Optional<Employee> optional = employeeRepository.findById(id);
-        return optional.orElseThrow(() -> new RuntimeException("Employee not found for id :: " + id));
+        return employeeRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Employee not found: " + id));
     }
 
+    // Delete employee
     public void deleteEmployee(Long id) {
         employeeRepository.deleteById(id);
+    }
+
+    // Check duplicate email, ignoring letter case
+    public boolean emailExists(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+
+        return employeeRepository.existsByEmailIgnoreCase(email.trim());
     }
 }
